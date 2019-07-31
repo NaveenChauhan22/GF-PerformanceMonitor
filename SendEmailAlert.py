@@ -8,7 +8,12 @@ import os
 
 FIRST_ARG = sys.argv[1]
 #SECOND_ARG = sys.argv[2]
-HOST_IP = socket.gethostbyname(socket.gethostname())
+#HOST_IP = socket.gethostbyname(socket.gethostname())
+
+HOST_IP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+HOST_IP.connect((“8.8.8.8”, 80))
+strHOST_IP = HOST_IP.getsockname()[0]
+HOST_IP.close()
 
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 465
@@ -19,7 +24,7 @@ SMTP_TO = ['naveen.chauhan@mobilelabsinc.com','naveen.chauhan@pyramidconsultingi
 EMAIL_SUBJECT = str(HOST_IP) + ': GigaFox server performance alert!'
 
 #TEXT_FILENAME = '/Users/administrator/Desktop/Jira/NewFolder/Logs/MobileLabs.DeviceConnect.WatchDog.log'
-MESSAGE = 'Alert for Server: ' + str(HOST_IP) + '\nMessage: ' + str(FIRST_ARG)
+MESSAGE = 'Alert for Server: ' + strHOST_IP + '\nMessage: ' + str(FIRST_ARG)
 
 #Construct the message
 #msg = email.MIMEMultipart.MIMEMultipart()
