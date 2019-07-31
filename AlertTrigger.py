@@ -11,7 +11,6 @@
 # 3. Add code to capture memory usage and lsof for all services.
 # 4. Capture logs via dclogs.sh and include the filename in the alert email or attach the logs to email.
 #############################################################################################################################
-
 import os
 import re
 import time
@@ -25,13 +24,15 @@ strRegExMemServices = r'(.*?)(localservices: ResidentSize)(.*)'
 strRegExLsofServices = r'(.*?)(localservices: Lsof count)(.*)'
 strRegExLsofWeb = r'(.*?)(localweb: Lsof count)(.*)'
 strRegExLsofWebViewer = r'(.*?)(localwebviewer: Lsof count)(.*)'
+strAlertMessage = ''
+blnSendEmail = False
 
 def main():
     #Ask user for how many minutes the script should be run
     mins = int(raw_input("Enter the minutes for which the WatchDog.log would be monitored: "))
     intMaxCpu = int(raw_input("Enter the max allowed CPU value, valid range is 1-100: "))
-    #intMaxMem = int(raw_input("Enter the max allowed Memory value, valid range is 100-11000: "))
-    #intMaxLsof = int(raw_input("Enter the max allowed lsof value, valid range is 100-2000: "))
+    intMaxMem = int(raw_input("Enter the max allowed Memory value, valid range is 100-5000 (MB): "))
+    intMaxLsof = int(raw_input("Enter the max allowed lsof value, valid range is 100-2000: "))
 
     i=1
     while (i <= mins):
@@ -43,22 +44,75 @@ def main():
         os.system(tailLog)
 
         #Send an alert if an anomaly is found in WatchDog.log
-        strCpuLine = str(parseAndGetLine(strRegExCpuServices, testLogPath))
+
+        #CPU Usage
+        strCpuLine = str(parseAndGetLine(strRegExCpuServices, testLogPath)).strip()
         #print strCpuLine
         strCpuValue = strCpuLine.split('Cpu usage')[1].strip()
         #print strCpuValue
         intCpuValue =  int(round(float(strCpuValue)))
         #print intCpuValue
 
-        if intCpuValue > intMaxCpu:
-            sendEmail('CPU usage is over: ' + str(intMaxCpu) + '\nWatchDog.log line: ' + strCpuLine)
+        #Memory Usage
+        strMemLine = str(parseAndGetLine(strRegExMemServices, testLogPath)).strip()
+        strMemLine = strMemLine.split('ResidentSize ')[1].strip()
+        #print strMemLine
+        strMemValue = strMemLine.split(' ')[0].strip()
+        #print strMemValue
+        intMemValue =  int(round((float(strMemValue))/1000000))
+        #print intMemValue
 
-        #intMemValue = parseAndGetValue(strRegExMem)
-        #if intMemValue > 1500000000:
-        #sendEmail('Testing alert email. Memory usage is: ' + intMemValue)
+        #lsof count services
+        strServicesLsofLine = str(parseAndGetLine(strRegExLsofServices, testLogPath)).strip()
+        #print strServicesLsofLine
+        strServicesLsofValue = strServicesLsofLine.split('Lsof count')[1].strip()
+        #print strServicesLsofValue
+        intServicesLsofValue =  int(strServicesLsofValue)
+        #print intServicesLsofValue
+
+        #lsof count web
+        strWebLsofLine = str(parseAndGetLine(strRegExLsofWeb, testLogPath)).strip()
+        #print strWebLsofLine
+        strWebLsofValue = strWebLsofLine.split('Lsof count')[1].strip()
+        #print strWebLsofValue
+        intWebLsofValue =  int(strWebLsofValue)
+        #print intWebLsofValue
+
+        #lsof count webviewer
+        strWebviewerLsofLine = str(parseAndGetLine(strRegExLsofWebViewer, testLogPath)).strip()
+        #print strWebviewerLsofLine
+        strWebviewerLsofValue = strWebviewerLsofLine.split('Lsof count')[1].strip()
+        #print strWebviewerLsofValue
+        intWebviewerLsofValue =  int(strWebviewerLsofValue)
+        #print intWebviewerLsofValue
+
+        #Total lsof
+        intTotalLsof = int(intServicesLsofValue + intWebLsofValue + intWebviewerLsofValue)
+        #print intTotalLsof
+
+        #Create alert message
+        if intCpuValue > intMaxCpu:
+            strAlertMessage = '\nCPU usage is over: ' + str(intMaxCpu) + '\nWatchDog.log line: ' + strCpuLine
+            blnSendEmail = True
+
+        if intMemValue > intMaxMem:
+            strAlertMessage = strAlertMessage + '\n' + '\nMemory usage is over: ' + str(intMaxMem) + '\nWatchDog.log line: ' + strMemLine
+            blnSendEmail = True
+
+        if intTotalLsof > intMaxLsof:
+            strLogLines = strServicesLsofLine + '\n' + strWebLsofLine + '\n' + strWebviewerLsofLine
+            strAlertMessage = strAlertMessage + '\n' + '\nlsof is over: ' + str(intMaxLsof) + '\nWatchDog.log lines:\n' + strLogLines
+            blnSendEmail = True
+
+        #Send email if threshold was breached
+        if blnSendEmail:
+            sendEmail(strAlertMessage)
+
+        #print  strAlertMessage
+
         if (i == mins):
             break
-        time.sleep(30)
+        time.sleep(55)
         i = i+1
 
 #Parse /usr/local/deviceconnect/Logs/MobileLabs.DeviceConnect.WatchDog.log for "localservices: Cpu usage" line and check the value

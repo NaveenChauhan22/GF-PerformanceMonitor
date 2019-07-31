@@ -11,7 +11,7 @@ FIRST_ARG = sys.argv[1]
 #HOST_IP = socket.gethostbyname(socket.gethostname())
 
 HOST_IP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-HOST_IP.connect((“8.8.8.8”, 80))
+HOST_IP.connect(("8.8.8.8", 80))
 strHOST_IP = HOST_IP.getsockname()[0]
 HOST_IP.close()
 
@@ -21,7 +21,7 @@ SMTP_USERNAME = 'mobilelabsQA@gmail.com'
 SMTP_PASSWORD = 'Basement@D-25'
 SMTP_FROM = 'mobilelabsQA@gmail.com'
 SMTP_TO = ['naveen.chauhan@mobilelabsinc.com','naveen.chauhan@pyramidconsultinginc.com']
-EMAIL_SUBJECT = str(HOST_IP) + ': GigaFox server performance alert!'
+EMAIL_SUBJECT = strHOST_IP + ': GigaFox server performance alert!'
 
 #TEXT_FILENAME = '/Users/administrator/Desktop/Jira/NewFolder/Logs/MobileLabs.DeviceConnect.WatchDog.log'
 MESSAGE = 'Alert for Server: ' + strHOST_IP + '\nMessage: ' + str(FIRST_ARG)
