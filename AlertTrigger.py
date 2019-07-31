@@ -14,6 +14,7 @@
 import os
 import re
 import time
+import  datetime
 
 #LOG_FILE_PATH = '/usr/local/deviceconnect/Logs/MobileLabs.DeviceConnect.WatchDog.log'
 LOG_FILE_PATH = '/Users/administrator/Desktop/Jira/NewFolder/Logs/MobileLabs.DeviceConnect.WatchDog.log'
@@ -35,7 +36,12 @@ def main():
     intMaxLsof = int(raw_input("Enter the max allowed lsof value, valid range is 100-2000: "))
 
     i=1
+    startTime = datetime.datetime.now().replace(microsecond=0)
+    #print startTime
+    blnFirstEmail = True
+
     while (i <= mins):
+
         #Get latest WatchDog.log every 30 seconds
         #tailLog = 'tail -F /usr/local/deviceconnect/Logs/MobileLabs.DeviceConnect.WatchDog.log > ./Test.log'
         tailLog = 'tail -n 25 ' + LOG_FILE_PATH + ' > ./Test.log'
@@ -104,9 +110,26 @@ def main():
             strAlertMessage = strAlertMessage + '\n' + '\nlsof is over: ' + str(intMaxLsof) + '\nWatchDog.log lines:\n' + strLogLines
             blnSendEmail = True
 
-        #Send email if threshold was breached
+        #Send email if threshold was breached and no email was sent in the past 15 minutes
         if blnSendEmail:
-            sendEmail(strAlertMessage)
+            if blnFirstEmail:
+                #print 'Send 1st email'
+                sendEmail(strAlertMessage)
+                blnFirstEmail = False
+                startTime = datetime.datetime.now().replace(microsecond=0)
+
+            endTime = datetime.datetime.now().replace(microsecond=0)
+            #print endTime
+            timeDiff = str(endTime - startTime)
+            #print timeDiff
+            timeMinutes = int(timeDiff.split(':')[1].strip())
+            #print timeMinutes
+
+            if timeMinutes > 15:
+                #print 'Send 2nd email'
+                sendEmail(strAlertMessage)
+                blnSendEmail = False
+                startTime = datetime.datetime.now().replace(microsecond=0)
 
         #print  strAlertMessage
 
