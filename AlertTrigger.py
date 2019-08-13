@@ -8,8 +8,7 @@
 # To be implemented:
 # 1. Refine code and add proper comments.
 # 2. Throw error if user  inputs are invalid.
-# 3. Add code to capture memory usage and lsof for all services.
-# 4. Capture logs via dclogs.sh and include the filename in the alert email or attach the logs to email.
+# 3. Capture logs via dclogs.sh and include the filename in the alert email or attach the logs to email.
 #############################################################################################################################
 import os
 import re
@@ -21,23 +20,31 @@ LOG_FILE_PATH = '/Users/administrator/Desktop/Jira/NewFolder/Logs/MobileLabs.Dev
 
 #All regular expressions
 strRegExCpuServices = r'(.*?)(localservices: Cpu usage)(.*)'
+strRegExCpuWeb = r'(.*?)(localweb: Cpu usage)(.*)'
+strRegExCpuWebViewer = r'(.*?)(localwebviewer: Cpu usage)(.*)'
 strRegExMemServices = r'(.*?)(localservices: ResidentSize)(.*)'
+strRegExMemWeb = r'(.*?)(localweb: ResidentSize)(.*)'
+strRegExMemWebViewer = r'(.*?)(localwebviewer: ResidentSize)(.*)'
 strRegExLsofServices = r'(.*?)(localservices: Lsof count)(.*)'
 strRegExLsofWeb = r'(.*?)(localweb: Lsof count)(.*)'
 strRegExLsofWebViewer = r'(.*?)(localwebviewer: Lsof count)(.*)'
-strAlertMessage = ''
-blnSendEmail = False
 
 def main():
-    #Ask user for how many minutes the script should be run
+    #Ask user for how many minutes the script should be run and waht max values are allowed
     mins = int(raw_input("Enter the minutes for which the WatchDog.log would be monitored: "))
-    intMaxCpu = int(raw_input("Enter the max allowed CPU value, valid range is 1-100: "))
-    intMaxMem = int(raw_input("Enter the max allowed Memory value, valid range is 100-5000 (MB): "))
+    intMaxCpu = int(raw_input("Enter the max allowed CPU value for dc-services, valid range is 1-100: "))
+    intMaxCpuWeb = int(raw_input("Enter the max allowed CPU value for dc-web, valid range is 1-100: "))
+    intMaxCpuWebViewer = int(raw_input("Enter the max allowed CPU value for dc-webviewer, valid range is 1-100: "))
+    intMaxMem = int(raw_input("Enter the max allowed Memory value for dc-services, valid range is 100-5000 (MB): "))
+    intMaxMemWeb = int(raw_input("Enter the max allowed Memory value for dc-web, valid range is 100-5000 (MB): "))
+    intMaxMemWebViewer = int(raw_input("Enter the max allowed Memory value for dc-webviewer, valid range is 100-5000 (MB): "))
     intMaxLsof = int(raw_input("Enter the max allowed lsof value, valid range is 100-2000: "))
 
     i=1
     startTime = datetime.datetime.now().replace(microsecond=0)
     #print startTime
+    strAlertMessage = ''
+    blnSendEmail = False
     blnFirstEmail = True
 
     while (i <= mins):
@@ -51,7 +58,7 @@ def main():
 
         #Send an alert if an anomaly is found in WatchDog.log
 
-        #CPU Usage
+        #CPU Usage - Services
         strCpuLine = str(parseAndGetLine(strRegExCpuServices, testLogPath)).strip()
         #print strCpuLine
         strCpuValue = strCpuLine.split('Cpu usage')[1].strip()
@@ -59,7 +66,23 @@ def main():
         intCpuValue =  int(round(float(strCpuValue)))
         #print intCpuValue
 
-        #Memory Usage
+        #CPU Usage - Web
+        strCpuLineWeb = str(parseAndGetLine(strRegExCpuWeb, testLogPath)).strip()
+        #print strCpuLineWeb
+        strCpuValueWeb = strCpuLineWeb.split('Cpu usage')[1].strip()
+        #print strCpuValueWeb
+        intCpuValueWeb =  int(round(float(strCpuValueWeb)))
+        #print intCpuValueWeb
+
+        #CPU Usage - WebViewer
+        strCpuLineWebViewer = str(parseAndGetLine(strRegExCpuWebViewer, testLogPath)).strip()
+        #print strCpuLineWebViewer
+        strCpuValueWebViewer = strCpuLineWebViewer.split('Cpu usage')[1].strip()
+        #print strCpuValueWebViewer
+        intCpuValueWebViewer =  int(round(float(strCpuValueWebViewer)))
+        #print intCpuValueWebViewer
+
+        #Memory Usage - Services
         strMemLine = str(parseAndGetLine(strRegExMemServices, testLogPath)).strip()
         strMemLine = strMemLine.split('ResidentSize ')[1].strip()
         #print strMemLine
@@ -67,6 +90,24 @@ def main():
         #print strMemValue
         intMemValue =  int(round((float(strMemValue))/1000000))
         #print intMemValue
+
+        #Memory Usage - Web
+        strMemLineWeb = str(parseAndGetLine(strRegExMemWeb, testLogPath)).strip()
+        strMemLineWeb = strMemLineWeb.split('ResidentSize ')[1].strip()
+        #print strMemLineWeb
+        strMemValueWeb = strMemLineWeb.split(' ')[0].strip()
+        #print strMemValueWeb
+        intMemValueWeb =  int(round((float(strMemValueWeb))/1000000))
+        #print intMemValueWeb
+
+        #Memory Usage - WebViewer
+        strMemLineWebViewer = str(parseAndGetLine(strRegExMemWebViewer, testLogPath)).strip()
+        strMemLineWebViewer = strMemLineWebViewer.split('ResidentSize ')[1].strip()
+        #print strMemLineWebViewer
+        strMemValueWebViewer = strMemLineWebViewer.split(' ')[0].strip()
+        #print strMemValueWebViewer
+        intMemValueWebViewer =  int(round((float(strMemValueWebViewer))/1000000))
+        #print intMemValueWebViewer
 
         #lsof count services
         strServicesLsofLine = str(parseAndGetLine(strRegExLsofServices, testLogPath)).strip()
@@ -98,11 +139,53 @@ def main():
 
         #Create alert message
         if intCpuValue > intMaxCpu:
-            strAlertMessage = '\nCPU usage is over: ' + str(intMaxCpu) + '\nWatchDog.log line: ' + strCpuLine
+            if blnSendEmail == False:
+                strPrefix =  ''
+            else:
+                strPrefix = '\n\n'
+            strAlertMessage = strPrefix + 'dc-services: CPU usage is over: ' + str(intMaxCpu) + '\nWatchDog.log line: ' + strCpuLine
+            blnSendEmail = True
+
+        if intCpuValueWeb > intMaxCpuWeb:
+            if blnSendEmail == False:
+                strPrefix =  ''
+            else:
+                strPrefix = '\n\n'
+            strAlertMessage = strAlertMessage + strPrefix + 'dc-web: CPU usage is over: ' + str(intMaxCpuWeb) + '\nWatchDog.log line: ' + strCpuLineWeb
+            blnSendEmail = True
+
+        if intCpuValueWebViewer > intMaxCpuWebViewer:
+            if blnSendEmail == False:
+                strPrefix =  ''
+            else:
+                strPrefix = '\n\n'
+            strAlertMessage = strAlertMessage + strPrefix + 'dc-webviewer: CPU usage is over: ' + str(intMaxCpuWebViewer) + '\nWatchDog.log line: ' \
+            + strCpuLineWebViewer
             blnSendEmail = True
 
         if intMemValue > intMaxMem:
-            strAlertMessage = strAlertMessage + '\n' + '\nMemory usage is over: ' + str(intMaxMem) + '\nWatchDog.log line: ' + strMemLine
+            if blnSendEmail == False:
+                strPrefix =  ''
+            else:
+                strPrefix = '\n\n'
+            strAlertMessage = strAlertMessage + strPrefix + 'dc-services: Memory usage is over: ' + str(intMaxMem) + '\nWatchDog.log line: ' + strMemLine
+            blnSendEmail = True
+
+        if intMemValueWeb > intMaxMemWeb :
+            if blnSendEmail == False:
+                strPrefix =  ''
+            else:
+                strPrefix = '\n\n'
+            strAlertMessage = strAlertMessage + strPrefix + 'dc-web: Memory usage is over: ' + str(intMaxMemWeb) + '\nWatchDog.log line: ' + strMemLineWeb
+            blnSendEmail = True
+
+        if intMemValueWebViewer > intMaxMemWebViewer :
+            if blnSendEmail == False:
+                strPrefix =  ''
+            else:
+                strPrefix = '\n\n'
+            strAlertMessage = strAlertMessage + strPrefix + 'dc-webviewer: Memory usage is over: ' + str(intMaxMemWebViewer) + '\nWatchDog.log line: ' \
+            + strMemLineWebViewer
             blnSendEmail = True
 
         if intTotalLsof > intMaxLsof:
@@ -138,7 +221,7 @@ def main():
         time.sleep(55)
         i = i+1
 
-#Parse /usr/local/deviceconnect/Logs/MobileLabs.DeviceConnect.WatchDog.log for "localservices: Cpu usage" line and check the value
+#Parse /usr/local/deviceconnect/Logs/MobileLabs.DeviceConnect.WatchDog.log for the passed in regex and return the complete log line
 def parseAndGetLine(strRegEx, strLogFilePath):
     read_line = True
 

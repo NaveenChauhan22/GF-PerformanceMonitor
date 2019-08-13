@@ -24,7 +24,10 @@ SMTP_TO = ['naveen.chauhan@mobilelabsinc.com','naveen.chauhan@pyramidconsultingi
 EMAIL_SUBJECT = strHOST_IP + ': GigaFox server performance alert!'
 
 #TEXT_FILENAME = '/Users/administrator/Desktop/Jira/NewFolder/Logs/MobileLabs.DeviceConnect.WatchDog.log'
-MESSAGE = 'Alert for Server: ' + strHOST_IP + '\nMessage: ' + str(FIRST_ARG)
+MESSAGE = 'Alert for Server: ' + strHOST_IP + '\n\nMessage: \n***************************************************************************\
+***************************************************************************\n' + str(FIRST_ARG) \
++ '\n*************************************************************************************************************************************\
+*****************'
 
 #Construct the message
 #msg = email.MIMEMultipart.MIMEMultipart()
