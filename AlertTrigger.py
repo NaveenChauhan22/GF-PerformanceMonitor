@@ -15,8 +15,8 @@ import re
 import time
 import  datetime
 
-#LOG_FILE_PATH = '/usr/local/deviceconnect/Logs/MobileLabs.DeviceConnect.WatchDog.log'
-LOG_FILE_PATH = '/Users/administrator/Desktop/Jira/NewFolder/Logs/MobileLabs.DeviceConnect.WatchDog.log'
+LOG_FILE_PATH = '/usr/local/deviceconnect/Logs/MobileLabs.DeviceConnect.WatchDog.log'
+#LOG_FILE_PATH = '/Users/administrator/Desktop/Jira/NewFolder/Logs/MobileLabs.DeviceConnect.WatchDog.log'
 
 #All regular expressions
 strRegExCpuServices = r'(.*?)(localservices: Cpu usage)(.*)'
