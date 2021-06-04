@@ -10,6 +10,7 @@
 # 2. Throw error if user  inputs are invalid.
 # 3. Capture logs via dclogs.sh and include the filename in the alert email or attach the logs to email.
 #############################################################################################################################
+import pdb; pdb.set_trace()
 import os
 import re
 import time

@@ -18,7 +18,7 @@ HOST_IP.close()
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 465
 SMTP_USERNAME = 'mobilelabsQA@gmail.com'
-SMTP_PASSWORD = 'Basement@D-25'
+SMTP_PASSWORD = 'Pyramid@D-25'
 SMTP_FROM = 'mobilelabsQA@gmail.com'
 SMTP_TO = ['naveen.chauhan@mobilelabsinc.com','naveen.chauhan@pyramidconsultinginc.com']
 EMAIL_SUBJECT = strHOST_IP + ': GigaFox server performance alert!'
